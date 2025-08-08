@@ -11,8 +11,8 @@ const canonical = () => (typeof window !== "undefined" ? window.location.href : 
 const Movies = () => {
   const [params, setParams] = useSearchParams();
   const q = params.get("q") || "";
-  const genre = params.get("genre") || "";
-  const lang = params.get("lang") || "";
+  const genre = params.get("genre") || "all";
+  const lang = params.get("lang") || "all";
 
   const genres = useMemo(() => Array.from(new Set(movies.flatMap((m) => m.genres))), []);
   const languages = useMemo(() => Array.from(new Set(movies.map((m) => m.language))), []);
@@ -21,8 +21,8 @@ const Movies = () => {
     const text = (m.title + " " + m.genres.join(" ") + " " + m.language).toLowerCase();
     return (
       text.includes(q.toLowerCase()) &&
-      (!genre || m.genres.includes(genre)) &&
-      (!lang || m.language === lang)
+      (genre === "all" || m.genres.includes(genre)) &&
+      (lang === "all" || m.language === lang)
     );
   });
 
@@ -43,23 +43,23 @@ const Movies = () => {
             value={q}
             onChange={(e) => setParams((prev) => ({ ...Object.fromEntries(prev), q: e.target.value }))}
           />
-          <Select value={genre} onValueChange={(v) => setParams((prev) => ({ ...Object.fromEntries(prev), genre: v }))}>
+          <Select value={genre} onValueChange={(v) => setParams((prev) => ({ ...Object.fromEntries(prev), genre: v === "all" ? "" : v }))}>
             <SelectTrigger>
               <SelectValue placeholder="Genre" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {genres.map((g) => (
                 <SelectItem key={g} value={g}>{g}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={lang} onValueChange={(v) => setParams((prev) => ({ ...Object.fromEntries(prev), lang: v }))}>
+          <Select value={lang} onValueChange={(v) => setParams((prev) => ({ ...Object.fromEntries(prev), lang: v === "all" ? "" : v }))}>
             <SelectTrigger>
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {languages.map((l) => (
                 <SelectItem key={l} value={l}>{l}</SelectItem>
               ))}

@@ -16,7 +16,7 @@ const Ticket = () => {
     <main className="container py-10">
       <Helmet>
         <title>Ticket #{booking.bookingId} | CineFlow</title>
-        <meta name="description" content={`Digital ticket for ${booking.movieTitle}. Show at ${booking.showtime}. Scan QR at entry.`} />
+        <meta name="description" content={`Digital ticket for ${booking.movieTitle} at ${booking.cinema}, ${booking.city}. Show at ${booking.showtime}. Scan QR at entry.`} />
         <link rel="canonical" href={canonical()} />
       </Helmet>
 
@@ -27,6 +27,7 @@ const Ticket = () => {
           <div>
             <h2 className="text-xl font-semibold">{booking.movieTitle}</h2>
             <p className="text-muted-foreground text-sm">Showtime: {booking.showtime}</p>
+            <p className="text-sm">Cinema: <strong>{booking.cinema}</strong> • City: <strong>{booking.city}</strong></p>
             <p className="text-sm">Seats: <strong>{booking.seats.join(", ")}</strong></p>
           </div>
         </header>

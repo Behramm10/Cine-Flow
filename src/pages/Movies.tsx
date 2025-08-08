@@ -5,6 +5,7 @@ import { movies } from "@/data/movies";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MovieCard } from "@/components/movies/MovieCard";
+import { CITIES } from "@/data/cinemas";
 
 const canonical = () => (typeof window !== "undefined" ? window.location.href : "");
 
@@ -13,6 +14,7 @@ const Movies = () => {
   const q = params.get("q") || "";
   const genre = params.get("genre") || "all";
   const lang = params.get("lang") || "all";
+  const city = params.get("city") || "all";
 
   const genres = useMemo(() => Array.from(new Set(movies.flatMap((m) => m.genres))), []);
   const languages = useMemo(() => Array.from(new Set(movies.map((m) => m.language))), []);
@@ -65,7 +67,17 @@ const Movies = () => {
               ))}
             </SelectContent>
           </Select>
-          <div />
+          <Select value={city} onValueChange={(v) => setParams((prev) => ({ ...Object.fromEntries(prev), city: v === "all" ? "" : v }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="City" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {CITIES.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </section>
 

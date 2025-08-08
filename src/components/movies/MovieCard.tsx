@@ -2,9 +2,10 @@ import { Movie } from "@/data/movies";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export const MovieCard = ({ movie }: { movie: Movie }) => {
+  const location = useLocation();
   return (
     <Card className="overflow-hidden hover:shadow-elegant transition-shadow">
       <CardContent className="p-0">
@@ -29,7 +30,7 @@ export const MovieCard = ({ movie }: { movie: Movie }) => {
             ))}
           </div>
           <Button asChild className="w-full">
-            <Link to={`/movie/${movie.id}`}>Details & Showtimes</Link>
+            <Link to={`/movie/${movie.id}${location.search || ""}`}>Details & Showtimes</Link>
           </Button>
         </div>
       </CardContent>

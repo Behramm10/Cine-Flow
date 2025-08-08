@@ -23,7 +23,7 @@ const Checkout = () => {
     <main className="container py-10">
       <Helmet>
         <title>Checkout – {booking.movieTitle} | CineFlow</title>
-        <meta name="description" content={`Confirm and pay for ${booking.movieTitle}. Digital QR ticket generated instantly.`} />
+        <meta name="description" content={`Confirm and pay for ${booking.movieTitle} at ${booking.cinema}, ${booking.city}. Digital QR ticket generated instantly.`} />
         <link rel="canonical" href={canonical()} />
       </Helmet>
 
@@ -33,6 +33,7 @@ const Checkout = () => {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">{booking.movieTitle}</h2>
           <p className="text-sm text-muted-foreground">Showtime: {booking.showtime}</p>
+          <p className="text-sm">Cinema: <strong>{booking.cinema}</strong> • City: <strong>{booking.city}</strong></p>
           <p className="text-sm">Seats: <strong>{booking.seats.join(", ")}</strong></p>
           <p className="text-lg mt-2">Total: <strong>${booking.total.toFixed(2)}</strong></p>
           <div className="pt-4">

@@ -10,6 +10,8 @@ type Record = {
   poster: string;
   seats: string[];
   showtime: string;
+  city?: string;
+  cinema?: string;
   total: number;
   timestamp: string;
 };
@@ -38,6 +40,7 @@ const History = () => {
             </header>
             <p className="mt-2 text-sm">Seats: <strong>{b.seats.join(", ")}</strong></p>
             <p className="text-sm">Showtime: {b.showtime}</p>
+            <p className="text-sm">Cinema: <strong>{b.cinema || "—"}</strong> • City: <strong>{b.city || "—"}</strong></p>
             <div className="mt-3">
               <Link to={`/ticket/${b.bookingId}`} className="text-sm underline text-primary">Open ticket</Link>
             </div>

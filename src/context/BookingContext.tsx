@@ -7,6 +7,8 @@ export type Booking = {
   poster: string;
   seats: string[];
   showtime: string;
+  city: string;
+  cinema: string; // cinema name
   total: number;
   bookingId?: string;
   timestamp?: string; // ISO
@@ -34,9 +36,9 @@ export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children })
 
   const value = useMemo<BookingCtx>(() => ({
     booking,
-    setSelection: ({ movieId, movieTitle, poster, seats, showtime, seatPrice }) => {
+    setSelection: ({ movieId, movieTitle, poster, seats, showtime, city, cinema, seatPrice }) => {
       const total = Number((seats.length * (seatPrice || seatPriceDefault)).toFixed(2));
-      setBooking({ movieId, movieTitle, poster, seats, showtime, total });
+      setBooking({ movieId, movieTitle, poster, seats, showtime, city, cinema, total });
     },
     confirm: () => {
       if (!booking) return null;

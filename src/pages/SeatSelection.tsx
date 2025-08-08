@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useBooking } from "@/context/BookingContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CINEMAS, CITIES } from "@/data/cinemas";
 
 const canonical = () => (typeof window !== "undefined" ? window.location.href : "");
 
@@ -27,7 +29,10 @@ const SeatSelection = () => {
 
   const movie = movies.find((m) => m.id === id);
   const [selected, setSelected] = useState<string[]>([]);
-
+  const initialCity = query.get("city");
+  const [city, setCity] = useState<string>(CITIES.includes(initialCity || "") ? (initialCity as string) : "");
+  const [cinemaId, setCinemaId] = useState<string>("");
+  const cityCinemas = useMemo(() => CINEMAS.filter((c) => !city || c.city === city), [city]);
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
   const toggleSeat = (seat: string) => {
@@ -40,12 +45,27 @@ const SeatSelection = () => {
       toast("Please select at least one seat.");
       return;
     }
+    if (!city) {
+      toast("Please choose a city.");
+      return;
+    }
+    if (!cinemaId) {
+      toast("Please choose a cinema.");
+      return;
+    }
+    const chosenCinema = CINEMAS.find((c) => c.id === cinemaId);
+    if (!chosenCinema) {
+      toast("Invalid cinema selection.");
+      return;
+    }
     setSelection({
       movieId: movie.id,
       movieTitle: movie.title,
       poster: movie.poster,
       seats: selected,
       showtime,
+      city,
+      cinema: chosenCinema.name,
       seatPrice: 9.99,
     });
     navigate("/checkout");
@@ -60,7 +80,36 @@ const SeatSelection = () => {
       </Helmet>
 
       <h1 className="text-2xl font-semibold mb-6">Select Seats</h1>
-      <p className="text-muted-foreground mb-4">{movie.title} • {showtime}</p>
+      <p className="text-muted-foreground mb-4">{movie.title} • {showtime || "Choose showtime"}</p>
+
+      <div className="mb-4 grid gap-4 sm:grid-cols-2 max-w-xl">
+        <div>
+          <label className="mb-2 block text-sm font-medium">City</label>
+          <Select value={city || undefined} onValueChange={(v) => { setCity(v); setCinemaId(""); }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a city" />
+            </SelectTrigger>
+            <SelectContent>
+              {CITIES.map((ct) => (
+                <SelectItem key={ct} value={ct}>{ct}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium">Cinema</label>
+          <Select value={cinemaId || undefined} onValueChange={setCinemaId} disabled={!city}>
+            <SelectTrigger>
+              <SelectValue placeholder={city ? "Select a cinema" : "Choose city first"} />
+            </SelectTrigger>
+            <SelectContent>
+              {cityCinemas.map((cn) => (
+                <SelectItem key={cn.id} value={cn.id}>{cn.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <Card className="p-4">
         <div className="mx-auto max-w-4xl">

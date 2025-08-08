@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { movies } from "@/data/movies";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ const canonical = () => (typeof window !== "undefined" ? window.location.href : 
 const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const movie = movies.find((m) => m.id === id);
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
@@ -46,7 +47,13 @@ const MovieDetails = () => {
             <h3 className="font-semibold mb-2">Showtimes</h3>
             <div className="flex flex-wrap gap-3">
               {movie.showtimes.map((t) => (
-                <Button key={t} variant="secondary" onClick={() => navigate(`/movie/${movie.id}/seats?showtime=${t}`)}>
+                <Button key={t} variant="secondary" onClick={() => {
+                  const current = new URLSearchParams(location.search);
+                  const city = current.get("city");
+                  const params = new URLSearchParams({ showtime: t });
+                  if (city && city !== "all") params.set("city", city);
+                  navigate(`/movie/${movie.id}/seats?${params.toString()}`);
+                }}>
                   {t}
                 </Button>
               ))}

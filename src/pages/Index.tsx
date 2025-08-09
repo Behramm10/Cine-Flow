@@ -34,7 +34,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/10" />
         </div>
 
-        <div className="container relative z-10 py-20 md:py-24">
+        <div className="container relative z-10 md:py-24 py-[50px]">
           <h1 className="text-4xl font-extrabold max-w-3xl leading-tight text-amber-50 md:text-7xl">
             <span className="text-gradient-brand font-extrabold text-amber-50">Book Movie Tickets</span> in seconds
           </h1>
@@ -49,15 +49,15 @@ const Index = () => {
             <Button type="submit" className="bg-gradient-brand text-primary-foreground shadow-elegant">Search</Button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-6 my-0 py-0">
             <Button asChild variant="secondary">
-              <Link to="/movies">Browse All Movies</Link>
+              <Link to="/movies" className="py-0">Browse All Movies</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      <main className="container py-12">
+      <main className="container py-[10px]">
         <section aria-labelledby="trending">
           <header className="mb-6">
             <h2 id="trending" className="text-2xl font-semibold">Now Showing</h2>

@@ -35,7 +35,7 @@ const Checkout = () => {
           <p className="text-sm text-muted-foreground">Showtime: {booking.showtime}</p>
           <p className="text-sm">Cinema: <strong>{booking.cinema}</strong> • City: <strong>{booking.city}</strong></p>
           <p className="text-sm">Seats: <strong>{booking.seats.join(", ")}</strong></p>
-          <p className="text-lg mt-2">Total: <strong>${booking.total.toFixed(2)}</strong></p>
+          <p className="text-lg mt-2">Total: <strong>₹{booking.total.toFixed(2)}</strong></p>
           <div className="pt-4">
             <Button onClick={onPay} className="bg-gradient-brand text-primary-foreground shadow-elegant">Confirm & Pay</Button>
           </div>

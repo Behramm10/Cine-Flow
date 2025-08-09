@@ -141,9 +141,9 @@ const SeatSelection = () => {
                             onClick={() => toggleSeat(seat)}
                             aria-pressed={isSelected}
                             aria-label={`Seat ${seat}${reserved ? ", reserved" : ""}`}
-                            className={`h-9 rounded-md text-xs font-medium transition-colors border
-                              ${reserved ? (isSciFi ? "bg-destructive text-destructive-foreground cursor-not-allowed" : "bg-muted text-muted-foreground cursor-not-allowed") : isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}
-                          >
+                              className={`h-9 rounded-md text-xs font-medium transition-colors border
+                              ${reserved ? "bg-destructive text-destructive-foreground cursor-not-allowed" : isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}
+                           >
                             {seat}
                           </button>
                         );
@@ -158,7 +158,7 @@ const SeatSelection = () => {
           <div className="mt-6 flex items-center gap-4">
             <span className="inline-flex items-center gap-2 text-sm"><span className="inline-block h-3 w-3 rounded bg-secondary" /> Available</span>
             <span className="inline-flex items-center gap-2 text-sm"><span className="inline-block h-3 w-3 rounded bg-primary" /> Selected</span>
-            <span className="inline-flex items-center gap-2 text-sm"><span className="inline-block h-3 w-3 rounded bg-muted" /> Reserved</span>
+            <span className="inline-flex items-center gap-2 text-sm"><span className="inline-block h-3 w-3 rounded bg-destructive" /> Reserved</span>
           </div>
 
           <div className="mt-6 flex items-center justify-between">

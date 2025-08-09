@@ -28,12 +28,21 @@ const SeatSelection = () => {
   const { setSelection } = useBooking();
 
   const movie = movies.find((m) => m.id === id);
+  const isSciFi = movie?.id === "sci-fi";
   const [selected, setSelected] = useState<string[]>([]);
   const initialCity = query.get("city");
   const [city, setCity] = useState<string>(CITIES.includes(initialCity || "") ? (initialCity as string) : "");
   const [cinemaId, setCinemaId] = useState<string>("");
   const cityCinemas = useMemo(() => CINEMAS.filter((c) => !city || c.city === city), [city]);
+  const tiers = useMemo(() => (
+    [
+      { price: 200, rows: ["A","B","C"] },
+      { price: 400, rows: ["D","E","F"] },
+      { price: 600, rows: ["G","H"] },
+    ]
+  ), []);
   if (!movie) return <main className="container py-10">Movie not found.</main>;
+
 
   const toggleSeat = (seat: string) => {
     if (reservedSample.has(seat)) return;
@@ -114,27 +123,34 @@ const SeatSelection = () => {
       <Card className="p-4">
         <div className="mx-auto max-w-4xl">
           <div className="mb-6 h-2 rounded bg-gradient-brand" aria-hidden />
-          <div className="grid gap-3">
-            {rows.map((r) => (
-              <div key={r} className="grid grid-cols-12 gap-2">
-                {cols.map((c) => {
-                  const seat = `${r}${c}`;
-                  const reserved = reservedSample.has(seat);
-                  const isSelected = selected.includes(seat);
-                  return (
-                    <button
-                      key={seat}
-                      type="button"
-                      onClick={() => toggleSeat(seat)}
-                      aria-pressed={isSelected}
-                      aria-label={`Seat ${seat}${reserved ? ", reserved" : ""}`}
-                      className={`h-9 rounded-md text-xs font-medium transition-colors border
-                        ${reserved ? "bg-muted text-muted-foreground cursor-not-allowed" : isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}
-                    >
-                      {seat}
-                    </button>
-                  );
-                })}
+          <div className="grid gap-5">
+            {tiers.map((tier) => (
+              <div key={tier.price} className="grid grid-cols-[80px_1fr] items-start gap-3">
+                <div className="text-sm font-medium text-muted-foreground">Rs {tier.price}</div>
+                <div className="grid gap-3">
+                  {tier.rows.map((r) => (
+                    <div key={r} className="grid grid-cols-12 gap-2">
+                      {cols.map((c) => {
+                        const seat = `${r}${c}`;
+                        const reserved = reservedSample.has(seat);
+                        const isSelected = selected.includes(seat);
+                        return (
+                          <button
+                            key={seat}
+                            type="button"
+                            onClick={() => toggleSeat(seat)}
+                            aria-pressed={isSelected}
+                            aria-label={`Seat ${seat}${reserved ? ", reserved" : ""}`}
+                            className={`h-9 rounded-md text-xs font-medium transition-colors border
+                              ${reserved ? (isSciFi ? "bg-destructive text-destructive-foreground cursor-not-allowed" : "bg-muted text-muted-foreground cursor-not-allowed") : isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}
+                          >
+                            {seat}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

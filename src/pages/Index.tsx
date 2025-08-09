@@ -34,7 +34,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/10" />
         </div>
 
-        <div className="container relative z-10 md:py-24 py-[50px]">
+        <div className="container relative z-10 md:py-24 py-[40px]">
           <h1 className="text-4xl font-extrabold max-w-3xl leading-tight text-amber-50 md:text-7xl">
             <span className="text-gradient-brand font-extrabold text-amber-50">Book Movie Tickets</span> in seconds
           </h1>

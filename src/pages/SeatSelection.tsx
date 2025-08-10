@@ -41,11 +41,33 @@ const SeatSelection = () => {
       { price: 600, rows: ["G","H"] },
     ]
   ), []);
+
+  // Helpers for pricing and dynamic reservations per movie-city-cinema-showtime
+  const chosenCinema = useMemo(() => CINEMAS.find((c) => c.id === cinemaId), [cinemaId]);
+  const getSeatPrice = (seat: string) => {
+    const row = seat.charAt(0);
+    const t = tiers.find((t) => t.rows.includes(row));
+    return t?.price ?? 200;
+  };
+  const reservedKey = useMemo(() => {
+    if (!movie || !city || !chosenCinema) return null;
+    return `cineflow_reserved_${movie.id}_${city}_${chosenCinema.name}_${showtime}`;
+  }, [movie, city, chosenCinema, showtime]);
+  const reservedExtra = useMemo(() => {
+    if (!reservedKey) return new Set<string>();
+    try {
+      const arr = JSON.parse(localStorage.getItem(reservedKey) || "[]") as string[];
+      return new Set(arr);
+    } catch {
+      return new Set<string>();
+    }
+  }, [reservedKey]);
+  const isReserved = (seat: string) => reservedSample.has(seat) || reservedExtra.has(seat);
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
 
   const toggleSeat = (seat: string) => {
-    if (reservedSample.has(seat)) return;
+    if (isReserved(seat)) return;
     setSelected((prev) => (prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]));
   };
 
@@ -62,20 +84,23 @@ const SeatSelection = () => {
       toast("Please choose a cinema.");
       return;
     }
-    const chosenCinema = CINEMAS.find((c) => c.id === cinemaId);
     if (!chosenCinema) {
       toast("Invalid cinema selection.");
       return;
     }
+    const seatPrices = selected.reduce<Record<string, number>>((acc, s) => {
+      acc[s] = getSeatPrice(s);
+      return acc;
+    }, {});
     setSelection({
       movieId: movie.id,
       movieTitle: movie.title,
       poster: movie.poster,
       seats: selected,
+      seatPrices,
       showtime,
       city,
       cinema: chosenCinema.name,
-      seatPrice: 9.99,
     });
     navigate("/checkout");
   };
@@ -132,7 +157,7 @@ const SeatSelection = () => {
                     <div key={r} className="grid grid-cols-12 gap-2">
                       {cols.map((c) => {
                         const seat = `${r}${c}`;
-                        const reserved = reservedSample.has(seat);
+                        const reserved = isReserved(seat);
                         const isSelected = selected.includes(seat);
                         return (
                           <button

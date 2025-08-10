@@ -6,6 +6,7 @@ export type Booking = {
   movieTitle: string;
   poster: string;
   seats: string[];
+  seatPrices: Record<string, number>; // per-seat pricing (₹)
   showtime: string;
   city: string;
   cinema: string; // cinema name
@@ -16,7 +17,7 @@ export type Booking = {
 
 type BookingCtx = {
   booking: Booking | null;
-  setSelection: (payload: Omit<Booking, "total"> & { seatPrice: number }) => void;
+  setSelection: (payload: Omit<Booking, "total" | "bookingId" | "timestamp">) => void;
   confirm: () => string | null; // returns bookingId
   clear: () => void;
 };
@@ -36,17 +37,31 @@ export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children })
 
   const value = useMemo<BookingCtx>(() => ({
     booking,
-    setSelection: ({ movieId, movieTitle, poster, seats, showtime, city, cinema, seatPrice }) => {
-      const total = Number((seats.length * (seatPrice || seatPriceDefault)).toFixed(2));
-      setBooking({ movieId, movieTitle, poster, seats, showtime, city, cinema, total });
+    setSelection: ({ movieId, movieTitle, poster, seats, seatPrices, showtime, city, cinema }) => {
+      const total = Number(seats.reduce((sum, s) => sum + (seatPrices?.[s] ?? seatPriceDefault), 0).toFixed(2));
+      setBooking({ movieId, movieTitle, poster, seats, seatPrices, showtime, city, cinema, total });
     },
     confirm: () => {
       if (!booking) return null;
       const bookingId = `BK${Date.now().toString(36)}`;
       const record = { ...booking, bookingId, timestamp: new Date().toISOString() };
+
+      // Save booking history
       const key = "cineflow_bookings";
       const existing = JSON.parse(localStorage.getItem(key) || "[]");
       localStorage.setItem(key, JSON.stringify([record, ...existing]));
+
+      // Persist reserved seats per movie-city-cinema-showtime
+      const resKey = `cineflow_reserved_${record.movieId}_${record.city}_${record.cinema}_${record.showtime}`;
+      try {
+        const prev = JSON.parse(localStorage.getItem(resKey) || "[]");
+        const set = new Set<string>(Array.isArray(prev) ? prev : []);
+        record.seats.forEach((s) => set.add(s));
+        localStorage.setItem(resKey, JSON.stringify(Array.from(set)));
+      } catch {
+        // ignore
+      }
+
       setBooking(record);
       return bookingId;
     },

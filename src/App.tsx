@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import { BookingProvider } from "@/context/BookingContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 import Index from "./pages/Index";
 import Movies from "./pages/Movies";
@@ -14,6 +15,8 @@ import Checkout from "./pages/Checkout";
 import Ticket from "./pages/Ticket";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -23,20 +26,24 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <BookingProvider>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/movies" element={<Movies />} />
-            <Route path="/movie/:id" element={<MovieDetails />} />
-            <Route path="/movie/:id/seats" element={<SeatSelection />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/ticket/:bookingId" element={<Ticket />} />
-            <Route path="/history" element={<History />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BookingProvider>
+        <AuthProvider>
+          <BookingProvider>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/movies" element={<Movies />} />
+              <Route path="/movie/:id" element={<MovieDetails />} />
+              <Route path="/movie/:id/seats" element={<SeatSelection />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/ticket/:bookingId" element={<Ticket />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BookingProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

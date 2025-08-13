@@ -12,6 +12,10 @@ const citySchema = z.object({
   name: z.string().min(1, "City name is required"),
 });
 
+type CityInsert = {
+  name: string;
+};
+
 type CityFormData = z.infer<typeof citySchema>;
 
 export function AddCityForm() {
@@ -27,7 +31,11 @@ export function AddCityForm() {
   const onSubmit = async (data: CityFormData) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("cities").insert(data);
+      const cityData: CityInsert = {
+        name: data.name,
+      };
+      
+      const { error } = await supabase.from("cities").insert(cityData);
       
       if (error) throw error;
       

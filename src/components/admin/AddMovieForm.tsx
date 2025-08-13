@@ -18,6 +18,15 @@ const movieSchema = z.object({
   poster_url: z.string().url().optional().or(z.literal("")),
 });
 
+type MovieInsert = {
+  title: string;
+  genre: string;
+  duration_minutes: number;
+  rating?: string;
+  description?: string;
+  poster_url?: string;
+};
+
 type MovieFormData = z.infer<typeof movieSchema>;
 
 export function AddMovieForm() {
@@ -38,7 +47,16 @@ export function AddMovieForm() {
   const onSubmit = async (data: MovieFormData) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("movies").insert(data);
+      const movieData: MovieInsert = {
+        title: data.title,
+        genre: data.genre,
+        duration_minutes: data.duration_minutes,
+        rating: data.rating || undefined,
+        description: data.description || undefined,
+        poster_url: data.poster_url || undefined,
+      };
+      
+      const { error } = await supabase.from("movies").insert(movieData);
       
       if (error) throw error;
       

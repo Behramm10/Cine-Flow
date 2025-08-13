@@ -17,6 +17,14 @@ const seatSchema = z.object({
   seat_label: z.string().optional(),
 });
 
+type SeatInsert = {
+  cinema_id: string;
+  auditorium: string;
+  row_label: string;
+  seat_number: number;
+  seat_label?: string;
+};
+
 type SeatFormData = z.infer<typeof seatSchema>;
 
 interface Cinema {
@@ -61,9 +69,11 @@ export function AddSeatForm() {
   const onSubmit = async (data: SeatFormData) => {
     setIsLoading(true);
     try {
-      // Generate seat_label if not provided
-      const seatData = {
-        ...data,
+      const seatData: SeatInsert = {
+        cinema_id: data.cinema_id,
+        auditorium: data.auditorium,
+        row_label: data.row_label,
+        seat_number: data.seat_number,
         seat_label: data.seat_label || `${data.row_label}${data.seat_number}`,
       };
 

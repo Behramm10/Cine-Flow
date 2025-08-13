@@ -16,6 +16,12 @@ const cinemaSchema = z.object({
   address: z.string().optional(),
 });
 
+type CinemaInsert = {
+  name: string;
+  city: string;
+  address?: string;
+};
+
 type CinemaFormData = z.infer<typeof cinemaSchema>;
 
 interface City {
@@ -57,7 +63,13 @@ export function AddCinemaForm() {
   const onSubmit = async (data: CinemaFormData) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("cinemas").insert(data);
+      const cinemaData: CinemaInsert = {
+        name: data.name,
+        city: data.city,
+        address: data.address || undefined,
+      };
+      
+      const { error } = await supabase.from("cinemas").insert(cinemaData);
       
       if (error) throw error;
       

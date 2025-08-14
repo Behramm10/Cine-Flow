@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { movies } from "@/data/movies";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useBooking } from "@/context/BookingContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CINEMAS, CITIES } from "@/data/cinemas";
+import { useMovies } from "@/hooks/useMovies";
+import { useCinemas } from "@/hooks/useCinemas";
+import { useCities } from "@/hooks/useCities";
+import { useShowtimes } from "@/hooks/useShowtimes";
+import { useReservedSeats } from "@/hooks/useReservedSeats";
 
 const canonical = () => (typeof window !== "undefined" ? window.location.href : "");
 
@@ -27,42 +30,43 @@ const SeatSelection = () => {
   const navigate = useNavigate();
   const { setSelection } = useBooking();
 
-  const movie = movies.find((m) => m.id === id);
-  const isSciFi = movie?.id === "sci-fi";
-  const [selected, setSelected] = useState<string[]>([]);
+  // Data hooks
+  const { movies, loading: moviesLoading } = useMovies();
+  const { cities, loading: citiesLoading } = useCities();
   const initialCity = query.get("city");
-  const [city, setCity] = useState<string>(CITIES.includes(initialCity || "") ? (initialCity as string) : "");
+  const [city, setCity] = useState<string>("");
+  const { cinemas, loading: cinemasLoading } = useCinemas(city);
   const [cinemaId, setCinemaId] = useState<string>("");
-  const cityCinemas = useMemo(() => CINEMAS.filter((c) => !city || c.city === city), [city]);
-  const tiers = useMemo(() => (
-    [
-      { price: 200, rows: ["A","B","C"] },
-      { price: 400, rows: ["D","E","F"] },
-      { price: 600, rows: ["G","H"] },
-    ]
-  ), []);
+  const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId);
+  const [selectedShowtimeId, setSelectedShowtimeId] = useState<string>("");
+  const { reservedSeats, loading: seatsLoading } = useReservedSeats(selectedShowtimeId);
 
-  // Helpers for pricing and dynamic reservations per movie-city-cinema-showtime
-  const chosenCinema = useMemo(() => CINEMAS.find((c) => c.id === cinemaId), [cinemaId]);
+  const movie = movies.find((m) => m.id === id);
+  const [selected, setSelected] = useState<string[]>([]);
+  const chosenCinema = cinemas.find((c) => c.id === cinemaId);
+  const selectedShowtime = showtimes.find(s => s.id === selectedShowtimeId);
+  const tiers = useMemo(() => {
+    const basePrice = selectedShowtime?.base_price || 200;
+    return [
+      { price: basePrice, rows: ["A","B","C"] },
+      { price: basePrice * 1.5, rows: ["D","E","F"] },
+      { price: basePrice * 2, rows: ["G","H"] },
+    ];
+  }, [selectedShowtime]);
+
   const getSeatPrice = (seat: string) => {
     const row = seat.charAt(0);
     const t = tiers.find((t) => t.rows.includes(row));
-    return t?.price ?? 200;
+    return t?.price ?? (selectedShowtime?.base_price || 200);
   };
-  const reservedKey = useMemo(() => {
-    if (!movie || !city || !chosenCinema) return null;
-    return `cineflow_reserved_${movie.id}_${city}_${chosenCinema.name}_${showtime}`;
-  }, [movie, city, chosenCinema, showtime]);
-  const reservedExtra = useMemo(() => {
-    if (!reservedKey) return new Set<string>();
-    try {
-      const arr = JSON.parse(localStorage.getItem(reservedKey) || "[]") as string[];
-      return new Set(arr);
-    } catch {
-      return new Set<string>();
-    }
-  }, [reservedKey]);
-  const isReserved = (seat: string) => reservedSample.has(seat) || reservedExtra.has(seat);
+
+  const isReserved = (seat: string) => reservedSample.has(seat) || reservedSeats.has(seat);
+
+  // Loading states
+  if (moviesLoading || citiesLoading) {
+    return <main className="container py-10">Loading...</main>;
+  }
+
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
 
@@ -84,8 +88,12 @@ const SeatSelection = () => {
       toast("Please choose a cinema.");
       return;
     }
-    if (!chosenCinema) {
-      toast("Invalid cinema selection.");
+    if (!selectedShowtimeId) {
+      toast("Please select a showtime.");
+      return;
+    }
+    if (!chosenCinema || !selectedShowtime) {
+      toast("Invalid selection.");
       return;
     }
     const seatPrices = selected.reduce<Record<string, number>>((acc, s) => {
@@ -93,14 +101,15 @@ const SeatSelection = () => {
       return acc;
     }, {});
     setSelection({
-      movieId: movie.id,
+      showtimeId: selectedShowtimeId,
       movieTitle: movie.title,
-      poster: movie.poster,
+      poster: movie.poster_url || "",
       seats: selected,
       seatPrices,
-      showtime,
+      showtime: new Date(selectedShowtime.starts_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
       city,
       cinema: chosenCinema.name,
+      auditorium: selectedShowtime.auditorium,
     });
     navigate("/checkout");
   };
@@ -116,29 +125,51 @@ const SeatSelection = () => {
       <h1 className="text-2xl font-semibold mb-6">Select Seats</h1>
       <p className="text-muted-foreground mb-4">{movie.title} • {showtime || "Choose showtime"}</p>
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 max-w-xl">
+      <div className="mb-4 grid gap-4 sm:grid-cols-3 max-w-4xl">
         <div>
           <label className="mb-2 block text-sm font-medium">City</label>
-          <Select value={city || undefined} onValueChange={(v) => { setCity(v); setCinemaId(""); }}>
+          <Select value={city || undefined} onValueChange={(v) => { 
+            setCity(v); 
+            setCinemaId(""); 
+            setSelectedShowtimeId("");
+          }}>
             <SelectTrigger>
               <SelectValue placeholder="Select a city" />
             </SelectTrigger>
             <SelectContent>
-              {CITIES.map((ct) => (
-                <SelectItem key={ct} value={ct}>{ct}</SelectItem>
+              {cities.map((ct) => (
+                <SelectItem key={ct.id} value={ct.name}>{ct.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <label className="mb-2 block text-sm font-medium">Cinema</label>
-          <Select value={cinemaId || undefined} onValueChange={setCinemaId} disabled={!city}>
+          <Select value={cinemaId || undefined} onValueChange={(v) => {
+            setCinemaId(v);
+            setSelectedShowtimeId("");
+          }} disabled={!city || cinemasLoading}>
             <SelectTrigger>
               <SelectValue placeholder={city ? "Select a cinema" : "Choose city first"} />
             </SelectTrigger>
             <SelectContent>
-              {cityCinemas.map((cn) => (
+              {cinemas.map((cn) => (
                 <SelectItem key={cn.id} value={cn.id}>{cn.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium">Showtime</label>
+          <Select value={selectedShowtimeId || undefined} onValueChange={setSelectedShowtimeId} disabled={!cinemaId || showtimesLoading}>
+            <SelectTrigger>
+              <SelectValue placeholder={cinemaId ? "Select showtime" : "Choose cinema first"} />
+            </SelectTrigger>
+            <SelectContent>
+              {showtimes.map((st) => (
+                <SelectItem key={st.id} value={st.id}>
+                  {new Date(st.starts_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {st.auditorium}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

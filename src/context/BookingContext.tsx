@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import type { Movie } from "@/data/movies";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export type Booking = {
-  movieId: string;
+  showtimeId: string;
   movieTitle: string;
   poster: string;
   seats: string[];
@@ -10,6 +12,7 @@ export type Booking = {
   showtime: string;
   city: string;
   cinema: string; // cinema name
+  auditorium: string;
   total: number;
   bookingId?: string;
   timestamp?: string; // ISO
@@ -18,8 +21,9 @@ export type Booking = {
 type BookingCtx = {
   booking: Booking | null;
   setSelection: (payload: Omit<Booking, "total" | "bookingId" | "timestamp">) => void;
-  confirm: () => string | null; // returns bookingId
+  confirm: () => Promise<string | null>; // returns bookingId
   clear: () => void;
+  isConfirming: boolean;
 };
 
 const BookingContext = createContext<BookingCtx | undefined>(undefined);
@@ -30,43 +34,85 @@ export const useBooking = () => {
   return ctx;
 };
 
-const seatPriceDefault = 9.99;
-
 export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const { user } = useAuth();
 
   const value = useMemo<BookingCtx>(() => ({
     booking,
-    setSelection: ({ movieId, movieTitle, poster, seats, seatPrices, showtime, city, cinema }) => {
-      const total = Number(seats.reduce((sum, s) => sum + (seatPrices?.[s] ?? seatPriceDefault), 0).toFixed(2));
-      setBooking({ movieId, movieTitle, poster, seats, seatPrices, showtime, city, cinema, total });
+    isConfirming,
+    setSelection: ({ showtimeId, movieTitle, poster, seats, seatPrices, showtime, city, cinema, auditorium }) => {
+      const total = Number(seats.reduce((sum, s) => sum + (seatPrices?.[s] ?? 200), 0).toFixed(2));
+      setBooking({ showtimeId, movieTitle, poster, seats, seatPrices, showtime, city, cinema, auditorium, total });
     },
-    confirm: () => {
-      if (!booking) return null;
-      const bookingId = `BK${Date.now().toString(36)}`;
-      const record = { ...booking, bookingId, timestamp: new Date().toISOString() };
-
-      // Save booking history
-      const key = "cineflow_bookings";
-      const existing = JSON.parse(localStorage.getItem(key) || "[]");
-      localStorage.setItem(key, JSON.stringify([record, ...existing]));
-
-      // Persist reserved seats per movie-city-cinema-showtime
-      const resKey = `cineflow_reserved_${record.movieId}_${record.city}_${record.cinema}_${record.showtime}`;
-      try {
-        const prev = JSON.parse(localStorage.getItem(resKey) || "[]");
-        const set = new Set<string>(Array.isArray(prev) ? prev : []);
-        record.seats.forEach((s) => set.add(s));
-        localStorage.setItem(resKey, JSON.stringify(Array.from(set)));
-      } catch {
-        // ignore
+    confirm: async () => {
+      if (!booking || !user) {
+        toast.error("Please login to confirm booking");
+        return null;
       }
 
-      setBooking(record);
-      return bookingId;
+      setIsConfirming(true);
+      try {
+        // Start a transaction-like approach
+        // 1. First create the booking
+        const { data: bookingData, error: bookingError } = await supabase
+          .from("bookings")
+          .insert({
+            user_id: user.id,
+            showtime_id: booking.showtimeId,
+            total_amount: booking.total,
+            currency: "INR",
+            status: "confirmed"
+          })
+          .select()
+          .single();
+
+        if (bookingError) throw bookingError;
+
+        // 2. Then insert all the seat reservations
+        const seatInserts = booking.seats.map(seat => ({
+          booking_id: bookingData.id,
+          showtime_id: booking.showtimeId,
+          seat_label: seat,
+          price: booking.seatPrices[seat] || 200
+        }));
+
+        const { error: seatsError } = await supabase
+          .from("booking_seats")
+          .insert(seatInserts);
+
+        if (seatsError) {
+          // Rollback: delete the booking if seats insertion fails
+          await supabase.from("bookings").delete().eq("id", bookingData.id);
+          throw seatsError;
+        }
+
+        const confirmedBooking = { 
+          ...booking, 
+          bookingId: bookingData.id, 
+          timestamp: bookingData.created_at 
+        };
+        setBooking(confirmedBooking);
+        
+        toast.success("Booking confirmed successfully!");
+        return bookingData.id;
+      } catch (error) {
+        console.error("Booking error:", error);
+        
+        // Check if it's a seat conflict error
+        if (error instanceof Error && error.message.includes("duplicate key")) {
+          toast.error("Some seats are no longer available. Please select different seats.");
+        } else {
+          toast.error("Failed to confirm booking. Please try again.");
+        }
+        return null;
+      } finally {
+        setIsConfirming(false);
+      }
     },
     clear: () => setBooking(null),
-  }), [booking]);
+  }), [booking, user, isConfirming]);
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;
 };

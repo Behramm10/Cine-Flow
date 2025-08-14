@@ -3,13 +3,15 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import hero from "@/assets/hero-cinema.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { movies } from "@/data/movies";
+import { useMovies } from "@/hooks/useMovies";
 import { MovieCard } from "@/components/movies/MovieCard";
 const canonical = () => typeof window !== "undefined" ? window.location.href : "";
 const Index = () => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const q = params.get("q") || "";
+  const { movies, loading } = useMovies();
+  
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(`/movies?q=${encodeURIComponent(q)}`);
@@ -64,7 +66,11 @@ const Index = () => {
             <p className="text-muted-foreground">Catch the latest hits in theaters</p>
           </header>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {movies.map(m => <MovieCard key={m.id} movie={m} />)}
+            {loading ? (
+              <p className="text-muted-foreground">Loading movies...</p>
+            ) : (
+              movies.slice(0, 6).map(m => <MovieCard key={m.id} movie={m} />)
+            )}
           </div>
         </section>
       </main>

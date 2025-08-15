@@ -17,6 +17,18 @@ const MovieDetails = () => {
 
   const movie = movies.find((m) => m.id === id);
 
+  // Group showtimes by date (must be declared before any early returns)
+  const showtimesByDate = useMemo(() => {
+    if (!showtimes || showtimes.length === 0) return {};
+    const grouped: Record<string, typeof showtimes> = {};
+    showtimes.forEach(showtime => {
+      const date = new Date(showtime.starts_at).toDateString();
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push(showtime);
+    });
+    return grouped;
+  }, [showtimes]);
+
   if (moviesLoading) return <main className="container py-10">Loading...</main>;
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
@@ -28,18 +40,6 @@ const MovieDetails = () => {
     navigate(`/movie/${movie.id}/seats?${params.toString()}`);
   };
 
-  // Group showtimes by date
-  const showtimesByDate = useMemo(() => {
-    if (!showtimes || showtimes.length === 0) return {};
-    
-    const grouped: Record<string, typeof showtimes> = {};
-    showtimes.forEach(showtime => {
-      const date = new Date(showtime.starts_at).toDateString();
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(showtime);
-    });
-    return grouped;
-  }, [showtimes]);
 
   return (
     <main className="container py-10">

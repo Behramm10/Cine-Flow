@@ -42,7 +42,7 @@ const SeatSelection = () => {
   
   // Filter showtimes for selected date
   const filteredShowtimes = useMemo(() => {
-    if (!selectedDate) return showtimes;
+    if (!showtimes || !selectedDate) return showtimes || [];
     return showtimes.filter(showtime => 
       new Date(showtime.starts_at).toDateString() === selectedDate
     );

@@ -30,6 +30,8 @@ const MovieDetails = () => {
 
   // Group showtimes by date
   const showtimesByDate = useMemo(() => {
+    if (!showtimes || showtimes.length === 0) return {};
+    
     const grouped: Record<string, typeof showtimes> = {};
     showtimes.forEach(showtime => {
       const date = new Date(showtime.starts_at).toDateString();

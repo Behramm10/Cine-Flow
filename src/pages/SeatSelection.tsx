@@ -26,7 +26,7 @@ const reservedSample = new Set(["A1","A2","B5","C7","D8","E3","F10","G6","H12"])
 const SeatSelection = () => {
   const { id } = useParams();
   const query = useQuery();
-  const showtime = query.get("showtime") || "";
+  const selectedDate = query.get("date") || "";
   const navigate = useNavigate();
   const { setSelection } = useBooking();
 
@@ -39,6 +39,14 @@ const SeatSelection = () => {
   const [cinemaId, setCinemaId] = useState<string>("");
   const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId);
   const [selectedShowtimeId, setSelectedShowtimeId] = useState<string>("");
+  
+  // Filter showtimes for selected date
+  const filteredShowtimes = useMemo(() => {
+    if (!selectedDate) return showtimes;
+    return showtimes.filter(showtime => 
+      new Date(showtime.starts_at).toDateString() === selectedDate
+    );
+  }, [showtimes, selectedDate]);
   const { reservedSeats, loading: seatsLoading } = useReservedSeats(selectedShowtimeId);
 
   const movie = movies.find((m) => m.id === id);
@@ -118,12 +126,20 @@ const SeatSelection = () => {
     <main className="container py-10">
       <Helmet>
         <title>Select Seats – {movie.title} | CineFlow</title>
-        <meta name="description" content={`Choose your seats for ${movie.title} at ${showtime}. Interactive seating with real-time selection.`} />
+        <meta name="description" content={`Choose your seats for ${movie.title}${selectedDate ? ` on ${new Date(selectedDate).toLocaleDateString()}` : ''}. Interactive seating with real-time selection.`} />
         <link rel="canonical" href={canonical()} />
       </Helmet>
 
       <h1 className="text-2xl font-semibold mb-6">Select Seats</h1>
-      <p className="text-muted-foreground mb-4">{movie.title} • {showtime || "Choose showtime"}</p>
+      <p className="text-muted-foreground mb-4">
+        {movie.title} 
+        {selectedDate && ` • ${new Date(selectedDate).toLocaleDateString([], { 
+          weekday: 'long', 
+          month: 'long', 
+          day: 'numeric' 
+        })}`}
+        {selectedShowtime && ` • ${new Date(selectedShowtime.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+      </p>
 
       <div className="mb-4 grid gap-4 sm:grid-cols-3 max-w-4xl">
         <div>
@@ -166,7 +182,7 @@ const SeatSelection = () => {
               <SelectValue placeholder={cinemaId ? "Select showtime" : "Choose cinema first"} />
             </SelectTrigger>
             <SelectContent>
-              {showtimes.map((st) => (
+              {filteredShowtimes.map((st) => (
                 <SelectItem key={st.id} value={st.id}>
                   {new Date(st.starts_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {st.auditorium}
                 </SelectItem>

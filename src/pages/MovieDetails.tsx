@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMovies } from "@/hooks/useMovies";
@@ -19,13 +20,24 @@ const MovieDetails = () => {
   if (moviesLoading) return <main className="container py-10">Loading...</main>;
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
-  const handleSelectShowtime = (showtimeId: string, startsAt: string) => {
+  const handleSelectDate = (date: string) => {
     const current = new URLSearchParams(location.search);
     const city = current.get("city");
-    const params = new URLSearchParams({ showtime: new Date(startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+    const params = new URLSearchParams({ date });
     if (city && city !== "all") params.set("city", city);
     navigate(`/movie/${movie.id}/seats?${params.toString()}`);
   };
+
+  // Group showtimes by date
+  const showtimesByDate = useMemo(() => {
+    const grouped: Record<string, typeof showtimes> = {};
+    showtimes.forEach(showtime => {
+      const date = new Date(showtime.starts_at).toDateString();
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push(showtime);
+    });
+    return grouped;
+  }, [showtimes]);
 
   return (
     <main className="container py-10">
@@ -60,20 +72,23 @@ const MovieDetails = () => {
           </p>
 
           <div>
-            <h3 className="font-semibold mb-2">Showtimes</h3>
+            <h3 className="font-semibold mb-2">Available Dates</h3>
             <div className="flex flex-wrap gap-3">
-              {showtimesLoading && <span className="text-sm text-muted-foreground">Loading showtimes...</span>}
-              {!showtimesLoading && showtimes.length === 0 && (
-                <span className="text-sm text-muted-foreground">No showtimes available.</span>
+              {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}
+              {!showtimesLoading && Object.keys(showtimesByDate).length === 0 && (
+                <span className="text-sm text-muted-foreground">No dates available.</span>
               )}
-              {!showtimesLoading && showtimes.map((st) => (
+              {!showtimesLoading && Object.keys(showtimesByDate).map((date) => (
                 <Button
-                  key={st.id}
+                  key={date}
                   variant="secondary"
-                  onClick={() => handleSelectShowtime(st.id, st.starts_at)}
+                  onClick={() => handleSelectDate(date)}
                 >
-                  {new Date(st.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  {st.auditorium ? ` – ${st.auditorium}` : ''}
+                  {new Date(date).toLocaleDateString([], { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
                 </Button>
               ))}
             </div>

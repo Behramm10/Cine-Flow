@@ -13,8 +13,8 @@ const Checkout = () => {
 
   if (!booking) return <main className="container py-10">No selection found.</main>;
 
-  const onPay = () => {
-    const id = confirm();
+  const onPay = async () => {
+    const id = await confirm();
     toast("Payment processed (demo)");
     if (id) navigate(`/ticket/${id}`);
   };

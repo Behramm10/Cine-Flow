@@ -15,7 +15,6 @@ const Checkout = () => {
 
   const onPay = async () => {
     const id = await confirm();
-    toast("Payment processed (demo)");
     if (id) navigate(`/ticket/${id}`);
   };
 

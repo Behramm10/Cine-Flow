@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMovies } from "@/hooks/useMovies";
 import { useShowtimes } from "@/hooks/useShowtimes";
+import { useAuth } from "@/context/AuthContext";
 
 const canonical = () => (typeof window !== "undefined" ? window.location.href : "");
 
@@ -12,6 +13,7 @@ const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { movies, loading: moviesLoading } = useMovies();
   const { showtimes, loading: showtimesLoading } = useShowtimes(id);
 
@@ -75,25 +77,36 @@ const MovieDetails = () => {
 
           <div>
             <h3 className="font-semibold mb-2">Available Dates</h3>
-            <div className="flex flex-wrap gap-3">
-              {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}
-              {!showtimesLoading && Object.keys(showtimesByDate).length === 0 && (
-                <span className="text-sm text-muted-foreground">No dates available.</span>
-              )}
-              {!showtimesLoading && Object.keys(showtimesByDate).map((date) => (
-                <Button
-                  key={date}
-                  variant="secondary"
-                  onClick={() => handleSelectDate(date)}
-                >
-                  {new Date(date).toLocaleDateString([], { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
+            {!user ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Sign in to book seats for this movie.</p>
+                <Button asChild>
+                  <Link to="/auth" state={{ from: location.pathname + location.search }}>
+                    Sign In to Book Seats
+                  </Link>
                 </Button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}
+                {!showtimesLoading && Object.keys(showtimesByDate).length === 0 && (
+                  <span className="text-sm text-muted-foreground">No dates available.</span>
+                )}
+                {!showtimesLoading && Object.keys(showtimesByDate).map((date) => (
+                  <Button
+                    key={date}
+                    variant="secondary"
+                    onClick={() => handleSelectDate(date)}
+                  >
+                    {new Date(date).toLocaleDateString([], { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

@@ -17,6 +17,7 @@ import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -33,12 +34,12 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/movie/:id" element={<MovieDetails />} />
-              <Route path="/movie/:id/seats" element={<SeatSelection />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/ticket/:bookingId" element={<Ticket />} />
-              <Route path="/history" element={<History />} />
+              <Route path="/movie/:id/seats" element={<ProtectedRoute><SeatSelection /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/ticket/:bookingId" element={<ProtectedRoute><Ticket /></ProtectedRoute>} />
+              <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

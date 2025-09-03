@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,16 +11,19 @@ import { cleanupAuthState } from "@/lib/auth";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const from = (location.state as any)?.from || "/";
+
   useEffect(() => {
-    // If already logged in, go home
+    // If already logged in, go to intended destination or home
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/", { replace: true });
+      if (data.session) navigate(from, { replace: true });
     });
-  }, [navigate]);
+  }, [navigate, from]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +34,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast("Signed in successfully");
-      window.location.href = "/";
+      navigate(from, { replace: true });
     } catch (err: any) {
       toast(err.message || "Failed to sign in");
     } finally {
@@ -98,8 +101,6 @@ const Auth = () => {
               </div>
               <Button type="submit" disabled={loading} className="w-full">{loading ? "Signing in..." : "Sign In"}</Button>
             </form>
-            <div className="my-4 text-center text-muted-foreground">or</div>
-            <Button type="button" variant="outline" onClick={handleGoogle} className="w-full">Continue with Google</Button>
           </TabsContent>
           <TabsContent value="signup" className="mt-4">
             <form onSubmit={handleSignUp} className="space-y-4">
@@ -113,8 +114,6 @@ const Auth = () => {
               </div>
               <Button type="submit" disabled={loading} className="w-full">{loading ? "Creating account..." : "Create Account"}</Button>
             </form>
-            <div className="my-4 text-center text-muted-foreground">or</div>
-            <Button type="button" variant="outline" onClick={handleGoogle} className="w-full">Continue with Google</Button>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu, X, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,12 +8,13 @@ import { cleanupAuthState } from "@/lib/auth";
 
 const routes = [
   { to: "/movies", label: "Movies" },
-  { to: "/history", label: "History" },
+  { to: "/history", label: "My Bookings" },
 ];
 
 const Navbar = () => {
   const { pathname } = useLocation();
   const { user, isAdmin, profile } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
@@ -41,18 +42,30 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-      <nav className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2" aria-label="CineFlow Home">
-          <div className="h-7 w-7 rounded-md bg-gradient-brand shadow-elegant" />
-          <span className="tracking-tight text-gradient-brand font-bold text-3xl">Movie2Date</span>
+    <header className="sticky top-0 z-50 glass-panel border-b backdrop-blur-xl">
+      <nav className="container flex h-16 sm:h-18 items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3 group" aria-label="CineFlow Home">
+          <div className="relative">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-brand shadow-primary group-hover:shadow-glow transition-all duration-300" />
+            <Film className="absolute inset-0 m-auto h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          </div>
+          <span className="text-gradient-brand font-bold text-xl sm:text-2xl tracking-tight hidden sm:block">
+            CineFlow
+          </span>
         </Link>
-        <div className="flex items-center gap-6">
+
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-8">
           {routes.map((r) => (
             <Link
               key={r.to}
               to={r.to}
-              className={`text-sm transition-colors hover:text-primary ${pathname.startsWith(r.to) ? "text-primary" : "text-muted-foreground"}`}
+              className={`text-sm font-medium transition-all duration-200 hover:text-primary hover:scale-105 ${
+                pathname.startsWith(r.to) 
+                  ? "text-primary" 
+                  : "text-muted-foreground"
+              }`}
             >
               {r.label}
             </Link>
@@ -60,36 +73,103 @@ const Navbar = () => {
           {isAdmin && (
             <Link
               to="/admin"
-              className={`text-sm transition-colors hover:text-primary ${pathname.startsWith('/admin') ? "text-primary" : "text-muted-foreground"}`}
+              className={`text-sm font-medium transition-all duration-200 hover:text-primary hover:scale-105 ${
+                pathname.startsWith('/admin') 
+                  ? "text-primary" 
+                  : "text-muted-foreground"
+              }`}
             >
-              Admin
+              Admin Panel
             </Link>
           )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
           <Button
             variant="outline"
+            size="sm"
             onClick={toggleTheme}
             aria-label="Toggle dark mode"
-            className="h-9 w-9 p-0"
+            className="h-9 w-9 p-0 hover:shadow-card transition-all duration-200"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+
+          {/* User Actions */}
           {!user ? (
-            <Button asChild className="bg-gradient-brand text-primary-foreground shadow-elegant">
+            <Button asChild className="bg-gradient-brand hover:shadow-glow transition-all duration-300 hidden sm:flex">
               <Link to="/auth">Sign In</Link>
             </Button>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground hidden sm:inline-block">
-                {profile?.display_name || user.email}
+              <span className="text-sm text-muted-foreground hidden md:inline-block font-medium">
+                {profile?.display_name || user.email?.split('@')[0]}
               </span>
-              <Button onClick={handleSignOut} variant="secondary">Sign Out</Button>
+              <Button 
+                onClick={handleSignOut} 
+                variant="secondary"
+                size="sm"
+                className="hover:shadow-card transition-all duration-200"
+              >
+                Sign Out
+              </Button>
             </div>
           )}
-          <Button asChild className="bg-gradient-brand text-primary-foreground shadow-elegant">
-            <Link to="/movies">Browse Movies</Link>
+
+          {/* Mobile Menu Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden h-9 w-9 p-0"
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
         </div>
       </nav>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden glass-panel border-t animate-fade-in">
+          <div className="container py-4 space-y-4">
+            {routes.map((r) => (
+              <Link
+                key={r.to}
+                to={r.to}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block text-sm font-medium transition-colors ${
+                  pathname.startsWith(r.to) 
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                {r.label}
+              </Link>
+            ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block text-sm font-medium transition-colors ${
+                  pathname.startsWith('/admin') 
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                Admin Panel
+              </Link>
+            )}
+            {!user && (
+              <Button asChild className="bg-gradient-brand w-full" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

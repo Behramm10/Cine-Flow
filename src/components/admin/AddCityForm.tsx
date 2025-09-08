@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
+import { sanitizeText, checkRateLimit } from "@/lib/security";
 
 const citySchema = z.object({
-  name: z.string().min(1, "City name is required"),
+  name: z.string()
+    .min(1, "City name is required")
+    .max(50, "City name must be less than 50 characters")
+    .refine((val) => sanitizeText(val) === val, "Invalid characters in city name"),
 });
 
 type CityInsert = {
@@ -29,10 +33,16 @@ export function AddCityForm() {
   });
 
   const onSubmit = async (data: CityFormData) => {
+    // Rate limiting check
+    if (!checkRateLimit('add-city', 5, 60000)) {
+      toast.error("Too many requests. Please wait before adding another city.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const cityData: CityInsert = {
-        name: data.name,
+        name: sanitizeText(data.name),
       };
       
       const { error } = await supabase.from("cities").insert(cityData);

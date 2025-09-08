@@ -9,11 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
+import { sanitizeText, checkRateLimit } from "@/lib/security";
 
 const cinemaSchema = z.object({
-  name: z.string().min(1, "Cinema name is required"),
+  name: z.string()
+    .min(1, "Cinema name is required")
+    .max(100, "Cinema name must be less than 100 characters")
+    .refine((val) => sanitizeText(val) === val, "Invalid characters in cinema name"),
   city: z.string().min(1, "City is required"),
-  address: z.string().optional(),
+  address: z.string()
+    .max(500, "Address must be less than 500 characters")
+    .refine((val) => !val || sanitizeText(val) === val, "Invalid characters in address")
+    .optional(),
 });
 
 type CinemaInsert = {
@@ -61,12 +68,18 @@ export function AddCinemaForm() {
   }, []);
 
   const onSubmit = async (data: CinemaFormData) => {
+    // Rate limiting check
+    if (!checkRateLimit('add-cinema', 5, 60000)) {
+      toast.error("Too many requests. Please wait before adding another cinema.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const cinemaData: CinemaInsert = {
-        name: data.name,
+        name: sanitizeText(data.name),
         city: data.city,
-        address: data.address || undefined,
+        address: data.address ? sanitizeText(data.address) : undefined,
       };
       
       const { error } = await supabase.from("cinemas").insert(cinemaData);

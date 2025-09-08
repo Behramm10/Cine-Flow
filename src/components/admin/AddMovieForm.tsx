@@ -8,14 +8,33 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
+import { sanitizeText, validatePosterUrl, checkRateLimit } from "@/lib/security";
 
 const movieSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  genre: z.string().min(1, "Genre is required"),
-  duration_minutes: z.coerce.number().min(1, "Duration must be at least 1 minute"),
-  rating: z.string().optional(),
-  description: z.string().optional(),
-  poster_url: z.string().url().optional().or(z.literal("")),
+  title: z.string()
+    .min(1, "Title is required")
+    .max(200, "Title must be less than 200 characters")
+    .refine((val) => sanitizeText(val) === val, "Invalid characters in title"),
+  genre: z.string()
+    .min(1, "Genre is required")
+    .max(50, "Genre must be less than 50 characters")
+    .refine((val) => sanitizeText(val) === val, "Invalid characters in genre"),
+  duration_minutes: z.coerce.number()
+    .min(1, "Duration must be at least 1 minute")
+    .max(600, "Duration must be less than 10 hours"),
+  rating: z.string()
+    .max(10, "Rating must be less than 10 characters")
+    .refine((val) => !val || sanitizeText(val) === val, "Invalid characters in rating")
+    .optional(),
+  description: z.string()
+    .max(2000, "Description must be less than 2000 characters")
+    .refine((val) => !val || sanitizeText(val) === val, "Invalid characters in description")
+    .optional(),
+  poster_url: z.string()
+    .url("Must be a valid URL")
+    .refine((val) => !val || validatePosterUrl(val), "Poster URL must be from an allowed domain")
+    .optional()
+    .or(z.literal("")),
 });
 
 type MovieInsert = {
@@ -45,14 +64,20 @@ export function AddMovieForm() {
   });
 
   const onSubmit = async (data: MovieFormData) => {
+    // Rate limiting check
+    if (!checkRateLimit('add-movie', 5, 60000)) {
+      toast.error("Too many requests. Please wait before adding another movie.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const movieData: MovieInsert = {
-        title: data.title,
-        genre: data.genre,
+        title: sanitizeText(data.title),
+        genre: sanitizeText(data.genre),
         duration_minutes: data.duration_minutes,
-        rating: data.rating || undefined,
-        description: data.description || undefined,
+        rating: data.rating ? sanitizeText(data.rating) : undefined,
+        description: data.description ? sanitizeText(data.description) : undefined,
         poster_url: data.poster_url || undefined,
       };
       

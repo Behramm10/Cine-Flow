@@ -193,6 +193,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_audit: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          performed_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          performed_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          performed_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       seats: {
         Row: {
           auditorium: string

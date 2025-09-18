@@ -9,6 +9,7 @@ export interface Movie {
   rating: string | null;
   description: string | null;
   poster_url: string | null;
+  trailer_url: string | null;
   created_at: string;
 }
 

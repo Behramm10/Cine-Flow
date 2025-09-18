@@ -4,9 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { Clock, Star, Play } from "lucide-react";
+import { TrailerModal } from "./TrailerModal";
+import { useState } from "react";
 
 export const MovieCard = ({ movie }: { movie: Movie }) => {
   const location = useLocation();
+  const [showTrailer, setShowTrailer] = useState(false);
   
   return (
     <Card className="group overflow-hidden card-hover glass-card border-0 bg-card/50">
@@ -30,11 +33,16 @@ export const MovieCard = ({ movie }: { movie: Movie }) => {
         )}
         
         {/* Play Button Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="rounded-full bg-primary/90 p-4 backdrop-blur-sm shadow-glow">
-            <Play className="h-6 w-6 text-white fill-white" />
+        {movie.trailer_url && (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <button
+              onClick={() => setShowTrailer(true)}
+              className="rounded-full bg-primary/90 p-4 backdrop-blur-sm shadow-glow hover:bg-primary hover:scale-110 transition-all duration-200"
+            >
+              <Play className="h-6 w-6 text-white fill-white" />
+            </button>
           </div>
-        </div>
+        )}
       </div>
       
       <CardContent className="p-5 space-y-3">
@@ -72,6 +80,15 @@ export const MovieCard = ({ movie }: { movie: Movie }) => {
           </Button>
         </div>
       </CardContent>
+
+      {movie.trailer_url && (
+        <TrailerModal
+          isOpen={showTrailer}
+          onClose={() => setShowTrailer(false)}
+          trailerUrl={movie.trailer_url}
+          movieTitle={movie.title}
+        />
+      )}
     </Card>
   );
 };

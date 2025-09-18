@@ -35,6 +35,10 @@ const movieSchema = z.object({
     .refine((val) => !val || validatePosterUrl(val), "Poster URL must be from an allowed domain")
     .optional()
     .or(z.literal("")),
+  trailer_url: z.string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
 });
 
 type MovieInsert = {
@@ -44,6 +48,7 @@ type MovieInsert = {
   rating?: string;
   description?: string;
   poster_url?: string;
+  trailer_url?: string;
 };
 
 type MovieFormData = z.infer<typeof movieSchema>;
@@ -60,6 +65,7 @@ export function AddMovieForm() {
       rating: "",
       description: "",
       poster_url: "",
+      trailer_url: "",
     },
   });
 
@@ -79,6 +85,7 @@ export function AddMovieForm() {
         rating: data.rating ? sanitizeText(data.rating) : undefined,
         description: data.description ? sanitizeText(data.description) : undefined,
         poster_url: data.poster_url || undefined,
+        trailer_url: data.trailer_url || undefined,
       };
       
       const { error } = await supabase.from("movies").insert(movieData);
@@ -165,6 +172,20 @@ export function AddMovieForm() {
                 <FormLabel>Poster URL</FormLabel>
                 <FormControl>
                   <Input placeholder="https://example.com/poster.jpg" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="trailer_url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Trailer URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://youtube.com/watch?v=..." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

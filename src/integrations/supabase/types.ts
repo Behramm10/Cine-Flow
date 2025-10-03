@@ -201,7 +201,7 @@ export type Database = {
           action: string
           created_at: string
           id: string
-          performed_by: string
+          performed_by: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -209,7 +209,7 @@ export type Database = {
           action: string
           created_at?: string
           id?: string
-          performed_by: string
+          performed_by?: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -217,7 +217,7 @@ export type Database = {
           action?: string
           created_at?: string
           id?: string
-          performed_by?: string
+          performed_by?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }

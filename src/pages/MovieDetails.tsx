@@ -1,10 +1,13 @@
 import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMovies } from "@/hooks/useMovies";
 import { useShowtimes } from "@/hooks/useShowtimes";
+import { useCinemas } from "@/hooks/useCinemas";
+import { useCities } from "@/hooks/useCities";
 import { useAuth } from "@/context/AuthContext";
 
 const canonical = () => (typeof window !== "undefined" ? window.location.href : "");
@@ -15,7 +18,16 @@ const MovieDetails = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { movies, loading: moviesLoading } = useMovies();
-  const { showtimes, loading: showtimesLoading } = useShowtimes(id);
+  
+  const [selectedCity, setSelectedCity] = useState<string>("all");
+  const [selectedCinema, setSelectedCinema] = useState<string>("all");
+  
+  const { cities } = useCities();
+  const { cinemas } = useCinemas(selectedCity !== "all" ? selectedCity : undefined);
+  const { showtimes, loading: showtimesLoading } = useShowtimes(
+    id, 
+    selectedCinema !== "all" ? selectedCinema : undefined
+  );
 
   const movie = movies.find((m) => m.id === id);
 
@@ -35,10 +47,9 @@ const MovieDetails = () => {
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
   const handleSelectDate = (date: string) => {
-    const current = new URLSearchParams(location.search);
-    const city = current.get("city");
     const params = new URLSearchParams({ date });
-    if (city && city !== "all") params.set("city", city);
+    if (selectedCity !== "all") params.set("city", selectedCity);
+    if (selectedCinema !== "all") params.set("cinema", selectedCinema);
     navigate(`/movie/${movie.id}/seats?${params.toString()}`);
   };
 
@@ -75,6 +86,53 @@ const MovieDetails = () => {
             ) : null}
           </p>
 
+          {user && (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select City</label>
+                  <Select value={selectedCity} onValueChange={(value) => {
+                    setSelectedCity(value);
+                    setSelectedCinema("all");
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Cities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cities</SelectItem>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select Cinema</label>
+                  <Select 
+                    value={selectedCinema} 
+                    onValueChange={setSelectedCinema}
+                    disabled={selectedCity === "all"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Cinemas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cinemas</SelectItem>
+                      {cinemas.map((cinema) => (
+                        <SelectItem key={cinema.id} value={cinema.id}>
+                          {cinema.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
             <h3 className="font-semibold mb-2">Available Dates</h3>
             {!user ? (
@@ -90,7 +148,7 @@ const MovieDetails = () => {
               <div className="flex flex-wrap gap-3">
                 {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}
                 {!showtimesLoading && Object.keys(showtimesByDate).length === 0 && (
-                  <span className="text-sm text-muted-foreground">No dates available.</span>
+                  <span className="text-sm text-muted-foreground">No dates available for selected filters.</span>
                 )}
                 {!showtimesLoading && Object.keys(showtimesByDate).map((date) => (
                   <Button

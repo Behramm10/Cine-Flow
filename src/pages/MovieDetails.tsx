@@ -32,13 +32,20 @@ const MovieDetails = () => {
   const movie = movies.find((m) => m.id === id);
 
   // Group showtimes by date (must be declared before any early returns)
+  // Filter to only show future showtimes
   const showtimesByDate = useMemo(() => {
     if (!showtimes || showtimes.length === 0) return {};
     const grouped: Record<string, typeof showtimes> = {};
+    const now = new Date();
+    
     showtimes.forEach(showtime => {
-      const date = new Date(showtime.starts_at).toDateString();
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(showtime);
+      const showtimeDate = new Date(showtime.starts_at);
+      // Only include future showtimes
+      if (showtimeDate > now) {
+        const date = showtimeDate.toDateString();
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(showtime);
+      }
     });
     return grouped;
   }, [showtimes]);

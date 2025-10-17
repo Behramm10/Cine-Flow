@@ -19,12 +19,18 @@ export interface Showtime {
   };
 }
 
-export const useShowtimes = (movieId?: string, cinemaId?: string) => {
+export const useShowtimes = (movieId?: string, cinemaId?: string, skip?: boolean) => {
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Skip fetching if explicitly told to skip
+    if (skip) {
+      setLoading(false);
+      return;
+    }
+
     const fetchShowtimes = async () => {
       try {
         setLoading(true);
@@ -58,7 +64,7 @@ export const useShowtimes = (movieId?: string, cinemaId?: string) => {
     };
 
     fetchShowtimes();
-  }, [movieId, cinemaId]);
+  }, [movieId, cinemaId, skip]);
 
   return { showtimes, loading, error };
 };

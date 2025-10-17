@@ -59,7 +59,7 @@ const SeatSelection = () => {
   const [city, setCity] = useState<string>(initialCity);
   const { cinemas, loading: cinemasLoading } = useCinemas(city);
   const [cinemaId, setCinemaId] = useState<string>("");
-  const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId);
+  const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId, !cinemaId);
   const [selectedShowtimeId, setSelectedShowtimeId] = useState<string>("");
   
   // Filter showtimes for selected date

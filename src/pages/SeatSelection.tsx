@@ -35,8 +35,8 @@ const SeatSelection = () => {
   // Data hooks
   const { movies, loading: moviesLoading } = useMovies();
   const { cities, loading: citiesLoading } = useCities();
-  const initialCity = query.get("city");
-  const [city, setCity] = useState<string>("");
+  const initialCity = query.get("city") || "";
+  const [city, setCity] = useState<string>(initialCity);
   const { cinemas, loading: cinemasLoading } = useCinemas(city);
   const [cinemaId, setCinemaId] = useState<string>("");
   const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId);

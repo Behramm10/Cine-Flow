@@ -244,24 +244,7 @@ const SeatSelection = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-sm font-medium">City</label>
-              <Select value={city || undefined} onValueChange={(v) => { 
-                setCity(v); 
-                setCinemaId(""); 
-                setSelectedShowtimeId("");
-              }}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select city" />
-                </SelectTrigger>
-                <SelectContent className="glass-panel border-0">
-                  {cities.map((ct) => (
-                    <SelectItem key={ct.id} value={ct.name}>{ct.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium">Cinema</label>
               <Select value={cinemaId || undefined} onValueChange={(v) => {
@@ -269,7 +252,7 @@ const SeatSelection = () => {
                 setSelectedShowtimeId("");
               }} disabled={!city || cinemasLoading}>
                 <SelectTrigger className="h-11">
-                  <SelectValue placeholder={city ? "Select cinema" : "Choose city first"} />
+                  <SelectValue placeholder="Select cinema" />
                 </SelectTrigger>
                 <SelectContent className="glass-panel border-0">
                   {cinemas.map((cn) => (

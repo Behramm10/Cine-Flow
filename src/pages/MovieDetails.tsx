@@ -51,7 +51,7 @@ const MovieDetails = () => {
   const handleSelectDate = (date: string) => {
     const params = new URLSearchParams({ date });
     if (selectedCity !== "all") params.set("city", selectedCity);
-    navigate(`/seat-selection/${movie.id}?${params.toString()}`);
+    navigate(`/movie/${movie.id}/seats?${params.toString()}`);
   };
 
 

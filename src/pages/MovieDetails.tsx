@@ -21,14 +21,15 @@ const MovieDetails = () => {
   const [selectedCity, setSelectedCity] = useState<string>("all");
   
   const { cities } = useCities();
-  const { showtimes, loading: showtimesLoading } = useShowtimes(id);
+  // Only fetch showtimes when user is logged in
+  const { showtimes, loading: showtimesLoading } = useShowtimes(id, undefined, !user);
 
   const movie = movies.find((m) => m.id === id);
 
-  // Group showtimes by date and filter by selected city
-  const showtimesByDate = useMemo(() => {
-    if (!showtimes || showtimes.length === 0) return {};
-    const grouped: Record<string, typeof showtimes> = {};
+  // Group showtimes by date and filter by selected city - optimized
+  const availableDates = useMemo(() => {
+    if (!showtimes || showtimes.length === 0) return [];
+    const dates = new Set<string>();
     const now = new Date();
     
     showtimes.forEach(showtime => {
@@ -36,13 +37,12 @@ const MovieDetails = () => {
       // Only include future showtimes and filter by city if selected
       if (showtimeDate > now) {
         if (selectedCity === "all" || showtime.cinemas?.city === selectedCity) {
-          const date = showtimeDate.toDateString();
-          if (!grouped[date]) grouped[date] = [];
-          grouped[date].push(showtime);
+          dates.add(showtimeDate.toDateString());
         }
       }
     });
-    return grouped;
+    
+    return Array.from(dates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
   }, [showtimes, selectedCity]);
 
   if (moviesLoading) return <main className="container py-10">Loading...</main>;
@@ -122,10 +122,10 @@ const MovieDetails = () => {
             ) : (
               <div className="flex flex-wrap gap-3">
                 {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}
-                {!showtimesLoading && Object.keys(showtimesByDate).length === 0 && (
+                {!showtimesLoading && availableDates.length === 0 && (
                   <span className="text-sm text-muted-foreground">No dates available for selected filters.</span>
                 )}
-                {!showtimesLoading && Object.keys(showtimesByDate).map((date) => (
+                {!showtimesLoading && availableDates.map((date) => (
                   <Button
                     key={date}
                     variant="secondary"

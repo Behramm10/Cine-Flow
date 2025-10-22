@@ -34,11 +34,9 @@ const SeatSelection = () => {
 
   // Data hooks
   const { movies, loading: moviesLoading } = useMovies();
-  const { cities, loading: citiesLoading } = useCities();
-  const initialCity = query.get("city") || "";
-  const [city, setCity] = useState<string>(initialCity);
-  const { cinemas, loading: cinemasLoading } = useCinemas(city);
-  const [cinemaId, setCinemaId] = useState<string>("");
+  const city = query.get("city") || "";
+  const cinemaId = query.get("cinema") || "";
+  const { cinemas } = useCinemas(city);
   const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId);
   const [selectedShowtimeId, setSelectedShowtimeId] = useState<string>("");
   
@@ -81,7 +79,7 @@ const SeatSelection = () => {
   const totalAmount = selected.reduce((sum, seat) => sum + getSeatPrice(seat), 0);
 
   // Loading states
-  if (moviesLoading || citiesLoading) {
+  if (moviesLoading) {
     return (
       <main className="container section-padding">
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -214,60 +212,25 @@ const SeatSelection = () => {
       <Card className="glass-card border-0 mb-8 animate-slide-up">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            Theater Selection
+            <Clock className="h-5 w-5 text-primary" />
+            Select Showtime
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-sm font-medium">City</label>
-              <Select value={city || undefined} onValueChange={(v) => { 
-                setCity(v); 
-                setCinemaId(""); 
-                setSelectedShowtimeId("");
-              }}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select city" />
-                </SelectTrigger>
-                <SelectContent className="glass-panel border-0">
-                  {cities.map((ct) => (
-                    <SelectItem key={ct.id} value={ct.name}>{ct.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">Cinema</label>
-              <Select value={cinemaId || undefined} onValueChange={(v) => {
-                setCinemaId(v);
-                setSelectedShowtimeId("");
-              }} disabled={!city || cinemasLoading}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder={city ? "Select cinema" : "Choose city first"} />
-                </SelectTrigger>
-                <SelectContent className="glass-panel border-0">
-                  {cinemas.map((cn) => (
-                    <SelectItem key={cn.id} value={cn.id}>{cn.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">Showtime</label>
-              <Select value={selectedShowtimeId || undefined} onValueChange={setSelectedShowtimeId} disabled={!cinemaId || showtimesLoading}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder={cinemaId ? "Select showtime" : "Choose cinema first"} />
-                </SelectTrigger>
-                <SelectContent className="glass-panel border-0">
-                  {filteredShowtimes.map((st) => (
-                    <SelectItem key={st.id} value={st.id}>
-                      {new Date(st.starts_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {st.auditorium}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="max-w-md">
+            <label className="mb-2 block text-sm font-medium">Available Showtimes</label>
+            <Select value={selectedShowtimeId || undefined} onValueChange={setSelectedShowtimeId} disabled={showtimesLoading}>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder={showtimesLoading ? "Loading showtimes..." : "Select showtime"} />
+              </SelectTrigger>
+              <SelectContent className="glass-panel border-0">
+                {filteredShowtimes.map((st) => (
+                  <SelectItem key={st.id} value={st.id}>
+                    {new Date(st.starts_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {st.auditorium}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

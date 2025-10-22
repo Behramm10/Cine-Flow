@@ -21,9 +21,9 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-const rows = "ABCDEFGH".split("");
+const rows = "ABCDEFG".split("");
 const cols = Array.from({ length: 12 }, (_, i) => i + 1);
-const reservedSample = new Set(["A1","A2","B5","C7","D8","E3","F10","G6","H12"]);
+const reservedSample = new Set(["A1","A2","B5","C7","D8","E3","F10","G6"]);
 
 const SeatSelection = () => {
   const { id } = useParams();
@@ -57,9 +57,9 @@ const SeatSelection = () => {
   const tiers = useMemo(() => {
     const basePrice = selectedShowtime?.base_price || 200;
     return [
-      { name: "Premium", price: basePrice * 2, rows: ["A","B"], color: "bg-yellow-500/20 border-yellow-500/40" },
+      { name: "Standard", price: basePrice, rows: ["A","B"], color: "bg-green-500/20 border-green-500/40" },
       { name: "Executive", price: basePrice * 1.5, rows: ["C","D","E"], color: "bg-blue-500/20 border-blue-500/40" },
-      { name: "Standard", price: basePrice, rows: ["F","G","H"], color: "bg-green-500/20 border-green-500/40" },
+      { name: "Premium", price: basePrice * 2, rows: ["F","G"], color: "bg-yellow-500/20 border-yellow-500/40" },
     ];
   }, [selectedShowtime]);
 

@@ -9,6 +9,7 @@ import { useShowtimes } from "@/hooks/useShowtimes";
 import { useCinemas } from "@/hooks/useCinemas";
 import { useCities } from "@/hooks/useCities";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const canonical = () => (typeof window !== "undefined" ? window.location.href : "");
 
@@ -54,9 +55,19 @@ const MovieDetails = () => {
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
   const handleSelectDate = (date: string) => {
-    const params = new URLSearchParams({ date });
-    if (selectedCity !== "all") params.set("city", selectedCity);
-    if (selectedCinema !== "all") params.set("cinema", selectedCinema);
+    if (selectedCity === "all") {
+      toast.error("Please select a city first");
+      return;
+    }
+    if (selectedCinema === "all") {
+      toast.error("Please select a cinema first");
+      return;
+    }
+    const params = new URLSearchParams({ 
+      date,
+      city: selectedCity,
+      cinema: selectedCinema
+    });
     navigate(`/movie/${movie.id}/seats?${params.toString()}`);
   };
 
@@ -151,6 +162,8 @@ const MovieDetails = () => {
                   </Link>
                 </Button>
               </div>
+            ) : selectedCity === "all" || selectedCinema === "all" ? (
+              <p className="text-sm text-muted-foreground">Please select city and cinema to view available dates.</p>
             ) : (
               <div className="flex flex-wrap gap-3">
                 {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}

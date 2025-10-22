@@ -21,13 +21,14 @@ const DateSelection = () => {
   const city = query.get("city") || "";
   
   const { movies, loading: moviesLoading } = useMovies();
-  const { showtimes, loading: showtimesLoading } = useShowtimes(id);
+  // Skip fetching if no city selected
+  const { showtimes, loading: showtimesLoading } = useShowtimes(id, undefined, !city);
 
   const movie = movies.find((m) => m.id === id);
 
   // Get available dates filtered by city
   const availableDates = useMemo(() => {
-    if (!showtimes || showtimes.length === 0) return [];
+    if (!showtimes || showtimes.length === 0 || !city) return [];
     const dates = new Set<string>();
     const now = new Date();
     
@@ -70,7 +71,7 @@ const DateSelection = () => {
   }
 
   const handleSelectDate = (date: string) => {
-    navigate(`/movie/${movie.id}/seats?city=${city}&date=${date}`);
+    navigate(`/movie/${movie.id}/seats?city=${encodeURIComponent(city)}&date=${encodeURIComponent(date)}`);
   };
 
   return (

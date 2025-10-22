@@ -23,7 +23,16 @@ function useQuery() {
 
 const rows = "ABCDEFG".split("");
 const cols = Array.from({ length: 12 }, (_, i) => i + 1);
-const reservedSample = new Set(["A1","A2","B5","C7","D8","E3","F10","G6"]);
+
+// Generate random reserved seats (15-25% of total seats)
+const generateRandomReservedSeats = () => {
+  const allSeats = rows.flatMap(row => cols.map(col => `${row}${col}`));
+  const reservedCount = Math.floor(allSeats.length * (0.15 + Math.random() * 0.1)); // 15-25%
+  const shuffled = allSeats.sort(() => Math.random() - 0.5);
+  return new Set(shuffled.slice(0, reservedCount));
+};
+
+const reservedSample = generateRandomReservedSeats();
 
 const SeatSelection = () => {
   const { id } = useParams();

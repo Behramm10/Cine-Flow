@@ -10,7 +10,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import Movies from "./pages/Movies";
 import MovieDetails from "./pages/MovieDetails";
-import DateSelection from "./pages/DateSelection";
 import SeatSelection from "./pages/SeatSelection";
 import Checkout from "./pages/Checkout";
 import Ticket from "./pages/Ticket";
@@ -35,7 +34,6 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/movie/:id" element={<MovieDetails />} />
-              <Route path="/movie/:id/dates" element={<ProtectedRoute><DateSelection /></ProtectedRoute>} />
               <Route path="/movie/:id/seats" element={<ProtectedRoute><SeatSelection /></ProtectedRoute>} />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="/ticket/:bookingId" element={<ProtectedRoute><Ticket /></ProtectedRoute>} />

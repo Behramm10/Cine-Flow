@@ -21,29 +21,9 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-const rows = "ABCDEFG".split("");
+const rows = "ABCDEFGH".split("");
 const cols = Array.from({ length: 12 }, (_, i) => i + 1);
-
-// Generate random reserved seats for each movie
-const generateRandomReservedSeats = (movieId: string) => {
-  const seed = movieId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const random = (min: number, max: number) => {
-    const x = Math.sin(seed + min + max) * 10000;
-    return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
-  };
-  
-  const numReserved = random(8, 15);
-  const reserved = new Set<string>();
-  const allRows = "ABCDEFG".split("");
-  
-  while (reserved.size < numReserved) {
-    const row = allRows[random(0, allRows.length - 1)];
-    const col = random(1, 12);
-    reserved.add(`${row}${col}`);
-  }
-  
-  return reserved;
-};
+const reservedSample = new Set(["A1","A2","B5","C7","D8","E3","F10","G6","H12"]);
 
 const SeatSelection = () => {
   const { id } = useParams();
@@ -59,7 +39,7 @@ const SeatSelection = () => {
   const [city, setCity] = useState<string>(initialCity);
   const { cinemas, loading: cinemasLoading } = useCinemas(city);
   const [cinemaId, setCinemaId] = useState<string>("");
-  const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId, !cinemaId);
+  const { showtimes, loading: showtimesLoading } = useShowtimes(id, cinemaId);
   const [selectedShowtimeId, setSelectedShowtimeId] = useState<string>("");
   
   // Filter showtimes for selected date
@@ -79,16 +59,11 @@ const SeatSelection = () => {
   const tiers = useMemo(() => {
     const basePrice = selectedShowtime?.base_price || 200;
     return [
-      { name: "Standard", price: basePrice, rows: ["A","B"], color: "bg-green-500/20 border-green-500/40" },
+      { name: "Premium", price: basePrice * 2, rows: ["A","B"], color: "bg-yellow-500/20 border-yellow-500/40" },
       { name: "Executive", price: basePrice * 1.5, rows: ["C","D","E"], color: "bg-blue-500/20 border-blue-500/40" },
-      { name: "Premium", price: basePrice * 2, rows: ["F","G"], color: "bg-yellow-500/20 border-yellow-500/40" },
+      { name: "Standard", price: basePrice, rows: ["F","G","H"], color: "bg-green-500/20 border-green-500/40" },
     ];
   }, [selectedShowtime]);
-
-  const randomReservedSeats = useMemo(() => 
-    id ? generateRandomReservedSeats(id) : new Set<string>(), 
-    [id]
-  );
 
   const getSeatPrice = (seat: string) => {
     const row = seat.charAt(0);
@@ -101,7 +76,7 @@ const SeatSelection = () => {
     return tiers.find((t) => t.rows.includes(row));
   };
 
-  const isReserved = (seat: string) => randomReservedSeats.has(seat) || reservedSeats.has(seat);
+  const isReserved = (seat: string) => reservedSample.has(seat) || reservedSeats.has(seat);
 
   const totalAmount = selected.reduce((sum, seat) => sum + getSeatPrice(seat), 0);
 
@@ -244,7 +219,24 @@ const SeatSelection = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-sm font-medium">City</label>
+              <Select value={city || undefined} onValueChange={(v) => { 
+                setCity(v); 
+                setCinemaId(""); 
+                setSelectedShowtimeId("");
+              }}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Select city" />
+                </SelectTrigger>
+                <SelectContent className="glass-panel border-0">
+                  {cities.map((ct) => (
+                    <SelectItem key={ct.id} value={ct.name}>{ct.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label className="mb-2 block text-sm font-medium">Cinema</label>
               <Select value={cinemaId || undefined} onValueChange={(v) => {
@@ -252,7 +244,7 @@ const SeatSelection = () => {
                 setSelectedShowtimeId("");
               }} disabled={!city || cinemasLoading}>
                 <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select cinema" />
+                  <SelectValue placeholder={city ? "Select cinema" : "Choose city first"} />
                 </SelectTrigger>
                 <SelectContent className="glass-panel border-0">
                   {cinemas.map((cn) => (

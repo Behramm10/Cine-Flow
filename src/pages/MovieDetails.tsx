@@ -1,10 +1,12 @@
 import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMovies } from "@/hooks/useMovies";
+import { useShowtimes } from "@/hooks/useShowtimes";
+import { useCinemas } from "@/hooks/useCinemas";
 import { useCities } from "@/hooks/useCities";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,18 +19,45 @@ const MovieDetails = () => {
   const { user } = useAuth();
   const { movies, loading: moviesLoading } = useMovies();
   
-  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("all");
+  const [selectedCinema, setSelectedCinema] = useState<string>("all");
   
   const { cities } = useCities();
+  const { cinemas } = useCinemas(selectedCity !== "all" ? selectedCity : undefined);
+  const { showtimes, loading: showtimesLoading } = useShowtimes(
+    id, 
+    selectedCinema !== "all" ? selectedCinema : undefined
+  );
 
   const movie = movies.find((m) => m.id === id);
+
+  // Group showtimes by date (must be declared before any early returns)
+  // Filter to only show future showtimes
+  const showtimesByDate = useMemo(() => {
+    if (!showtimes || showtimes.length === 0) return {};
+    const grouped: Record<string, typeof showtimes> = {};
+    const now = new Date();
+    
+    showtimes.forEach(showtime => {
+      const showtimeDate = new Date(showtime.starts_at);
+      // Only include future showtimes
+      if (showtimeDate > now) {
+        const date = showtimeDate.toDateString();
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(showtime);
+      }
+    });
+    return grouped;
+  }, [showtimes]);
 
   if (moviesLoading) return <main className="container py-10">Loading...</main>;
   if (!movie) return <main className="container py-10">Movie not found.</main>;
 
-  const handleContinue = () => {
-    if (!selectedCity) return;
-    navigate(`/movie/${movie.id}/dates?city=${selectedCity}`);
+  const handleSelectDate = (date: string) => {
+    const params = new URLSearchParams({ date });
+    if (selectedCity !== "all") params.set("city", selectedCity);
+    if (selectedCinema !== "all") params.set("cinema", selectedCinema);
+    navigate(`/movie/${movie.id}/seats?${params.toString()}`);
   };
 
 
@@ -64,41 +93,86 @@ const MovieDetails = () => {
             ) : null}
           </p>
 
-          {!user ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Sign in to book seats for this movie.</p>
-              <Button asChild>
-                <Link to="/auth" state={{ from: location.pathname + location.search }}>
-                  Sign In to Book Seats
-                </Link>
-              </Button>
-            </div>
-          ) : (
+          {user && (
             <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Select City</label>
-                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a city" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map((city) => (
-                      <SelectItem key={city.id} value={city.name}>
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select City</label>
+                  <Select value={selectedCity} onValueChange={(value) => {
+                    setSelectedCity(value);
+                    setSelectedCinema("all");
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Cities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cities</SelectItem>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select Cinema</label>
+                  <Select 
+                    value={selectedCinema} 
+                    onValueChange={setSelectedCinema}
+                    disabled={selectedCity === "all"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Cinemas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cinemas</SelectItem>
+                      {cinemas.map((cinema) => (
+                        <SelectItem key={cinema.id} value={cinema.id}>
+                          {cinema.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <Button 
-                onClick={handleContinue} 
-                disabled={!selectedCity}
-                className="bg-gradient-brand hover:shadow-glow"
-              >
-                Continue to Select Date
-              </Button>
             </div>
           )}
+
+          <div>
+            <h3 className="font-semibold mb-2">Available Dates</h3>
+            {!user ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Sign in to book seats for this movie.</p>
+                <Button asChild>
+                  <Link to="/auth" state={{ from: location.pathname + location.search }}>
+                    Sign In to Book Seats
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {showtimesLoading && <span className="text-sm text-muted-foreground">Loading dates...</span>}
+                {!showtimesLoading && Object.keys(showtimesByDate).length === 0 && (
+                  <span className="text-sm text-muted-foreground">No dates available for selected filters.</span>
+                )}
+                {!showtimesLoading && Object.keys(showtimesByDate).map((date) => (
+                  <Button
+                    key={date}
+                    variant="secondary"
+                    onClick={() => handleSelectDate(date)}
+                  >
+                    {new Date(date).toLocaleDateString([], { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div>
             <Button asChild variant="ghost">

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CheckCircle2 } from "lucide-react";
 
 export type Booking = {
   showtimeId: string;
@@ -37,6 +39,7 @@ export const useBooking = () => {
 export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { user } = useAuth();
 
   const value = useMemo<BookingCtx>(() => ({
@@ -95,7 +98,14 @@ export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children })
         };
         setBooking(confirmedBooking);
         
-        toast.success("Booking confirmed successfully!");
+        // Show success dialog instead of toast
+        setShowSuccessDialog(true);
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+          setShowSuccessDialog(false);
+        }, 5000);
+        
         return bookingData.id;
       } catch (error) {
         console.error("Booking error:", error);
@@ -114,5 +124,25 @@ export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children })
     clear: () => setBooking(null),
   }), [booking, user, isConfirming]);
 
-  return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;
+  return (
+    <BookingContext.Provider value={value}>
+      {children}
+      
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent className="max-w-md">
+          <div className="flex flex-col items-center justify-center text-center py-6 space-y-4">
+            <div className="rounded-full bg-green-500/20 p-4 animate-scale-in">
+              <CheckCircle2 className="w-16 h-16 text-green-500" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-bold">
+              Booking Confirmed Successfully!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Your tickets have been booked. Redirecting to your ticket...
+            </AlertDialogDescription>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </BookingContext.Provider>
+  );
 };

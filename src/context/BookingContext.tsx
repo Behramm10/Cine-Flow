@@ -129,15 +129,15 @@ export const BookingProvider: React.FC<React.PropsWithChildren> = ({ children })
       {children}
       
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <AlertDialogContent className="max-w-md">
-          <div className="flex flex-col items-center justify-center text-center py-6 space-y-4">
-            <div className="rounded-full bg-green-500/20 p-4 animate-scale-in">
-              <CheckCircle2 className="w-16 h-16 text-green-500" />
+        <AlertDialogContent className="max-w-2xl w-[90vw]">
+          <div className="flex flex-col items-center justify-center text-center py-12 space-y-6">
+            <div className="rounded-full bg-green-500/20 p-8 animate-scale-in">
+              <CheckCircle2 className="w-32 h-32 text-green-500" />
             </div>
-            <AlertDialogTitle className="text-2xl font-bold">
+            <AlertDialogTitle className="text-4xl md:text-5xl font-bold">
               Booking Confirmed Successfully!
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
+            <AlertDialogDescription className="text-xl md:text-2xl">
               Your tickets have been booked. Redirecting to your ticket...
             </AlertDialogDescription>
           </div>

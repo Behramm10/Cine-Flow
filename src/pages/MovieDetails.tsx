@@ -8,6 +8,7 @@ import { useMovies } from "@/hooks/useMovies";
 import { useShowtimes } from "@/hooks/useShowtimes";
 import { useCinemas } from "@/hooks/useCinemas";
 import { useCities } from "@/hooks/useCities";
+import { useShowtimeGeneration } from "@/hooks/useShowtimeGeneration";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -22,6 +23,8 @@ const MovieDetails = () => {
   
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedCinema, setSelectedCinema] = useState<string>("all");
+  
+  useShowtimeGeneration();
   
   const { cities } = useCities();
   const { cinemas } = useCinemas(selectedCity !== "all" ? selectedCity : undefined);

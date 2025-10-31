@@ -58,6 +58,13 @@ export const useShowtimes = (movieId?: string, cinemaId?: string) => {
     };
 
     fetchShowtimes();
+    
+    // Auto-refresh showtimes every 15 seconds
+    const interval = setInterval(() => {
+      fetchShowtimes();
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [movieId, cinemaId]);
 
   return { showtimes, loading, error };

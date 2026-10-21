@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# Cine-Flow — Movie Booking Web Application
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/bf70279c-1124-40a5-9490-0222e7c44d8a
+Cine-Flow is a web-based movie discovery and booking application. Its routes include movie browsing and details, protected seat selection and checkout, ticket details, booking history, authentication, and an administrative page.
 
-## How can I edit this code?
+**Live deployment:** https://cine-flow-a012.onrender.com  
+**Source repository:** https://github.com/Behramm10/Cine-Flow
 
-There are several ways of editing your application.
+## Technology Stack
 
-**Use Lovable**
+- Frontend: React 18, TypeScript, Vite
+- Routing: React Router
+- UI: Tailwind CSS and shadcn/ui
+- Backend services: Supabase
+- Cloud hosting: Render Static Site
+- Source control: Git and GitHub
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bf70279c-1124-40a5-9490-0222e7c44d8a) and start prompting.
+## Application Routes
 
-Changes made via Lovable will be committed automatically to this repo.
+| Route | Purpose | Access |
+|---|---|---|
+| `/` | Home page | Public |
+| `/movies` | Browse movies | Public |
+| `/movie/:id` | Movie details | Public |
+| `/movie/:id/seats` | Seat selection | Protected |
+| `/checkout` | Checkout | Protected |
+| `/ticket/:bookingId` | Ticket details | Protected |
+| `/history` | Booking history | Protected |
+| `/auth` | Authentication | Public |
+| `/admin` | Administrative page | Protected |
 
-**Use your preferred IDE**
+Access restrictions and available operations also depend on the current application implementation and Supabase policies.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Run Locally
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Prerequisites
 
-Follow these steps:
+- Node.js (current LTS recommended)
+- npm
+- Git
+- Access to the Supabase project configured for the application
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+git clone https://github.com/Behramm10/Cine-Flow.git
+cd Cine-Flow
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open the local URL printed by Vite in the terminal.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Production build
 
-**Use GitHub Codespaces**
+```bash
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The production files are generated in `dist/`. To preview the build locally, run:
 
-## What technologies are used for this project?
+```bash
+npm run preview
+```
 
-This project is built with:
+## Cloud Deployment Summary
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Cine-Flow is deployed as a Render Static Site. Render builds the Vite frontend from GitHub and publishes the `dist/` directory. Supabase provides backend services used by the application.
 
-## How can I deploy this project?
+Typical Render settings:
 
-Simply open [Lovable](https://lovable.dev/projects/bf70279c-1124-40a5-9490-0222e7c44d8a) and click on Share -> Publish.
+- Repository: `Behramm10/Cine-Flow`
+- Branch: `main` (or the branch selected for deployment)
+- Build command: `npm install && npm run build`
+- Publish directory: `dist`
 
-## Can I connect a custom domain to my Lovable project?
+A rewrite rule supports React Router deep links:
 
-Yes, you can!
+| Source | Destination | Action |
+|---|---|---|
+| `/*` | `/index.html` | Rewrite |
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+See [CLOUD_DEPLOYMENT_STEPS.md](CLOUD_DEPLOYMENT_STEPS.md) and [DEMONSTRATION_MATRIX.md](DEMONSTRATION_MATRIX.md).
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Configuration and Security Notes
+
+- The Supabase publishable/legacy `anon` key is intended for client-side use, but database access must still be protected with appropriate Row Level Security (RLS) policies.
+- Never place a Supabase `service_role` key or other privileged secret in frontend code or a `VITE_` variable.
+- Ensure `.env` is excluded from version control by adding `.env` to `.gitignore`. If it has already been committed, deleting it from the latest version does not remove it from Git history.
+- Repository-specific note: the `src/integrations/supabase/client.ts` version inspected during documentation preparation contains the Supabase URL and publishable/anon key as string literals. If this remains true in the deployed commit, Render environment variables will not replace those values unless the client is updated to read `import.meta.env`. Consider updating the client to use `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, then redeploy.
+- If any privileged credential was committed, revoke or rotate it. Do not include passwords, tokens, or private user details in screenshots.
+
+## Known Deployment Consideration
+
+Render static hosting needs a rewrite for React Router paths. The `/*` → `/index.html` rule was added and nested-route refresh was reported as working.
+
+
